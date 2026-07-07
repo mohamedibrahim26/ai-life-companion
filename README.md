@@ -319,16 +319,4 @@ Ai-assitant/
 - Mobile PWA with push notifications on iOS and Android
 - Invite system so you can share Vera with friends or family
 
----
 
-## Author
-
-**Mohamed Ibrahim** - M.Tech, Computer Science and Engineering, VIT
-
-[GitHub](https://github.com/mohamedibrahim26) | [LinkedIn](https://linkedin.com/in/mohamedibrahim26) | ibrahim764566@gmail.com
-
----
-
-## License
-
-MIT - see [LICENSE](LICENSE).
