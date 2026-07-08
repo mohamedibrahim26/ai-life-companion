@@ -19,6 +19,10 @@
 [![ElevenLabs](https://img.shields.io/badge/TTS-ElevenLabs-000000)](https://elevenlabs.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+### [🚀 Live Demo](https://innovative-courtesy-production-0504.up.railway.app)
+
+**Demo credentials:** `demo@vera.ai` / `demo123456`
+
 </div>
 
 ---
