@@ -49,7 +49,7 @@ The difference from a regular AI assistant is that Vera accumulates context over
 
 **Multilingual support.** Vera supports 30+ languages and always replies in the language you have configured in your profile, regardless of what language you type in. Voice recognition also adjusts to your locale automatically.
 
-**Admin dashboard.** There is a built-in admin view that shows all users, their mood trends, goal health, and flags anyone who has logged low mood several days in a row or abandoned a goal they were committed to.
+**Admin dashboard.** There is a built-in admin view that shows all users, their mood trends, goal health, and flags anyone who has logged low mood several days in a row or abandoned a goal they were committed to. Access is checked on the server: only logged-in accounts listed in `ADMIN_EMAILS` get any data back.
 
 ---
 
@@ -63,12 +63,12 @@ The difference from a regular AI assistant is that Vera accumulates context over
 | Mood tracking | Daily mood check-ins on a 1 to 5 scale, with 7-day history fed into Vera's context |
 | Push notifications | Browser reminders at 9 AM and 8 PM for Locked In goals not yet checked in |
 | 30+ languages | Vera always responds in your configured language, no matter what you type in |
-| Adaptive persona | Vera adjusts her tone based on your gender, warmer and nurturing for males, calm and grounding for females |
+| Privacy controls | Export all your data as JSON or permanently delete your account at any time |
 | Memory panel | View and edit everything Vera knows about you at any time |
 | Conversation search | Search through all past messages by keyword |
 | Progress log | Add notes to individual goals to track what you actually did |
 | Chat export | Download your full conversation history as an HTML file |
-| Admin dashboard | Monitor users, mood trends, goal health, and get alerts for at-risk users |
+| Admin dashboard | Monitor users, mood trends, goal health, and get alerts for at-risk users (restricted to `ADMIN_EMAILS`) |
 | PWA ready | Installable on desktop and mobile via service worker and web app manifest |
 | Dark and light mode | System-aware theme with a manual toggle |
 
@@ -137,7 +137,7 @@ The difference from a regular AI assistant is that Vera accumulates context over
 - Voice mode enforces a 25-word response limit and mirrors the user's emotional tone
 - Consecutive message deduplication before Groq API calls to prevent rejection from malformed history
 - Long-term memory built by periodically summarising older conversations and storing them in a `memory_summaries` table
-- Automated profile extraction that picks up your name, age, profession, gender, and life context from the first few conversations
+- Automated profile extraction that picks up your name, age, profession and life context from the first few conversations (gender only if you state it yourself)
 
 ---
 
@@ -170,7 +170,11 @@ Open `.env` and fill in your values:
 AI_SERVICE_URL=http://localhost:8000
 PORT=3001
 ELEVENLABS_API_KEY=your_key_here
+JWT_SECRET=<at least 32 random characters, required>
+ADMIN_EMAILS=you@example.com
 ```
+
+Generate a secret with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`. The server refuses to start without one.
 
 ### 3. Set up the AI service
 
@@ -203,6 +207,33 @@ cd frontend && npm run dev
 ```
 
 Then open **http://localhost:5173** in your browser.
+
+---
+
+## Security and privacy
+
+Vera stores personal conversations and mood data, so access control is enforced on the server, not the browser.
+
+- **Every data route requires a valid login token.** Requests without one get `401`.
+- **Users can only touch their own data.** Every route with a `:userId` checks it matches the logged-in user, so one user cannot read, edit or delete another user's chats, goals or moods (`403`).
+- **Admin routes are server-gated** to accounts listed in `ADMIN_EMAILS`.
+- **No default secrets.** The server will not start without a strong `JWT_SECRET`. Tokens expire after 7 days by default.
+- **Password hashes never leave the server**, and passwords are hashed with bcrypt (cost 12).
+- **Rate limits** on login/register (brute force) and on AI and voice routes (cost abuse).
+- **Security headers** via `helmet`, and request bodies capped at 100 KB.
+- **GDPR controls:** `GET /api/user/:userId/export` downloads everything stored about you; `DELETE /api/user/:userId` permanently deletes your account and all data.
+- **No gender stereotyping:** Vera uses one persona for everyone and never guesses a user's gender.
+
+See [SECURITY.md](SECURITY.md) for the threat model and how to report a vulnerability.
+
+### Running the tests
+
+```bash
+cd backend
+npm test
+```
+
+The test suite checks the access rules above: missing and forged tokens, cross-user access (IDOR), admin gating, password-hash leaks, input validation, and account export/deletion. Tests run on every push via GitHub Actions.
 
 ---
 
