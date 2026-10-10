@@ -180,12 +180,10 @@ function UserDrawer({ userId, onClose }) {
 }
 
 // ── Main admin page ───────────────────────────────────────────────────────────
-const ADMIN_PASSWORD = 'vera2024';
-
 export default function AdminPage() {
-  const [authed,   setAuthed]   = useState(() => sessionStorage.getItem('vera_admin') === '1');
-  const [password, setPassword] = useState('');
-  const [pwError,  setPwError]  = useState(false);
+  // Access is decided by the server: only logged-in users whose email is in
+  // ADMIN_EMAILS get data back. 'checking' | 'ok' | 'denied'
+  const [access,   setAccess]   = useState('checking');
 
   const [stats,    setStats]    = useState(null);
   const [users,    setUsers]    = useState([]);
@@ -199,51 +197,37 @@ export default function AdminPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [s, u, g, a, al] = await Promise.all([
-      getAdminStats(), getAdminUsers(), getAdminGoals(), getAdminActivity(), getAdminAlerts()
-    ]);
-    setStats(s); setUsers(u); setGoals(g); setActivity(a); setAlerts(al);
+    try {
+      const [s, u, g, a, al] = await Promise.all([
+        getAdminStats(), getAdminUsers(), getAdminGoals(), getAdminActivity(), getAdminAlerts()
+      ]);
+      setStats(s); setUsers(u); setGoals(g); setActivity(a); setAlerts(al);
+      setAccess('ok');
+    } catch (err) {
+      const status = err?.response?.status;
+      setAccess(status === 401 || status === 403 ? 'denied' : 'ok');
+    }
     setLoading(false);
   }, []);
 
-  useEffect(() => { if (authed) load(); }, [authed]);
+  useEffect(() => { load(); }, [load]);
 
-  function handleLogin(e) {
-    e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem('vera_admin', '1');
-      setAuthed(true);
-    } else {
-      setPwError(true);
-      setTimeout(() => setPwError(false), 1500);
-    }
+  if (access === 'checking') {
+    return (
+      <div className="flex items-center justify-center w-full h-full bg-slate-950 text-slate-400 text-sm">
+        Checking access…
+      </div>
+    );
   }
 
-  // ── Login gate ──────────────────────────────────────────────────────────────
-  if (!authed) {
+  if (access === 'denied') {
     return (
       <div className="flex items-center justify-center w-full h-full bg-slate-950">
-        <form onSubmit={handleLogin} className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-80 space-y-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-white">Vera</p>
-            <p className="text-slate-400 text-sm mt-1">Admin Dashboard</p>
-          </div>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="Password"
-            autoFocus
-            className={`w-full bg-slate-700 border rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none transition-colors ${
-              pwError ? 'border-red-500' : 'border-slate-600 focus:border-blue-500'
-            }`}
-          />
-          {pwError && <p className="text-red-400 text-xs text-center">Wrong password</p>}
-          <button type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-2.5 text-sm font-medium transition-colors">
-            Enter
-          </button>
-        </form>
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-80 space-y-2 text-center">
+          <p className="text-2xl font-bold text-white">Vera</p>
+          <p className="text-slate-300 text-sm">Admin access required.</p>
+          <p className="text-slate-500 text-xs">Log in with an account listed in ADMIN_EMAILS on the server.</p>
+        </div>
       </div>
     );
   }

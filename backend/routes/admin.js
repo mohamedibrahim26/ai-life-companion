@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { publicUser } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.get('/users', (req, res) => {
     ORDER BY last_active DESC NULLS LAST
   `).all();
 
-  res.json({ users });
+  res.json({ users: users.map(publicUser) });
 });
 
 // ── Single user detail — profile + goals + recent messages ────────────────────
@@ -72,7 +73,7 @@ router.get('/users/:userId', (req, res) => {
     FROM messages WHERE user_id = ?
   `).get(req.params.userId);
 
-  res.json({ user, goals, messages, stats });
+  res.json({ user: publicUser(user), goals, messages, stats });
 });
 
 // ── All goals across all users ────────────────────────────────────────────────

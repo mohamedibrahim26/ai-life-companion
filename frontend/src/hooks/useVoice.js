@@ -259,8 +259,11 @@ export function useVoice() {
     try {
       const resp = await fetch(`${BASE_URL}/api/tts/speak`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, persona: personaId, userId }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('vera_token') || ''}`,
+        },
+        body: JSON.stringify({ text, persona: personaId }),
       });
 
       if (!resp.ok) {
