@@ -19,11 +19,9 @@
 [![ElevenLabs](https://img.shields.io/badge/TTS-ElevenLabs-000000)](https://elevenlabs.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-### [🚀 Live Demo](https://innovative-courtesy-production-0504.up.railway.app)
+### Run it locally
 
-**Demo credentials:** `demo@vera.ai` / `demo123456`
-
-</div>
+The hosted demo has been taken down. See [Getting started](#getting-started) to run Vera on your own machine in a few minutes (a free Groq API key is all you need).
 
 ---
 
