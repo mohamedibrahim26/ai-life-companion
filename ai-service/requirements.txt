@@ -6,7 +6,7 @@ httpx==0.27.2
 
 # ── LLM providers ─────────────────────────────────────────────────────────────
 openai==1.51.0          # OpenAI + Groq (OpenAI-compatible)
-anthropic==0.34.2       # Anthropic Claude
+anthropic==1.12.1       # Anthropic Claude
 google-generativeai==0.8.2  # Google Gemini
 ollama==0.3.3           # Local Ollama (free, no API key needed)
 
