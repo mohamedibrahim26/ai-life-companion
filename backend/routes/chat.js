@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { ownUserParam } from '../middleware/auth.js';
 import { chat } from '../ai/vera.js';
 
 const router = Router();
+
+// Every :userId route below only works for the logged-in user's own ID.
+router.param('userId', ownUserParam);
 
 // Get message history
 router.get('/:userId', (req, res) => {

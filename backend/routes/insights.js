@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { suggestGoals, summarizeMemory, generateWeeklyRecap } from '../ai/vera.js';
 import db from '../db.js';
+import { ownUserParam } from '../middleware/auth.js';
 
 const router = Router();
+
+// Every :userId route below only works for the logged-in user's own ID.
+router.param('userId', ownUserParam);
 
 // GET /insights/:userId/suggest-goals — AI suggests 1-2 goals based on chat
 router.get('/:userId/suggest-goals', async (req, res) => {

@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
+import { ownUserParam } from '../middleware/auth.js';
 
 const router = Router();
+
+// Every :userId route below only works for the logged-in user's own ID.
+router.param('userId', ownUserParam);
 
 // Log a mood entry
 router.post('/:userId', (req, res) => {

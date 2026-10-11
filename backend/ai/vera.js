@@ -43,16 +43,12 @@ function buildSystemPrompt(user, goals, recentMoods = [], memorySummaries = [], 
   const userLang     = user?.language || 'en-US';
   const userLangName = LANG_NAMES[userLang] || 'English';
   const userName     = user?.name || 'friend';
-  const userGender   = user?.gender || 'unknown';
-
-  const persona = userGender === 'male'
-    ? `Relate to ${userName} like the warmest, most emotionally intelligent woman in his life — nurturing, honest, never clinical. Sit with his pain before trying to fix it. Celebrate his wins genuinely.`
-    : userGender === 'female'
-    ? `Relate to ${userName} like the steadiest, most understanding man in her life — calm, grounding, never minimising. Witness her emotions first, advice second. Match her energy when she wins.`
-    : `Be ${userName}'s closest, most emotionally intelligent friend — zero judgement, infinite patience. Witness before advising.`;
+  // One persona for everyone. Tone adapts to what the user says and feels,
+  // not to their gender.
+  const persona = `Be ${userName}'s closest, most emotionally intelligent friend — warm, honest, zero judgement, infinite patience. Witness their feelings before giving advice. Celebrate their wins genuinely.`;
 
   return `You are Vera, ${userName}'s personal life companion. You are warm, human, and genuinely caring — never a generic bot.
-${memoryText}User: ${userName} | Gender: ${userGender} | Age: ${user?.age || '?'} | Profession: ${user?.profession || '?'} | ${user?.life_context ? `Context: ${user.life_context}` : ''} | Language: ${userLangName} | Onboarded: ${user?.onboarded ? 'yes' : 'no'}
+${memoryText}User: ${userName} | Age: ${user?.age || '?'} | Profession: ${user?.profession || '?'} | ${user?.life_context ? `Context: ${user.life_context}` : ''} | Language: ${userLangName} | Onboarded: ${user?.onboarded ? 'yes' : 'no'}
 ${user?.personality_notes ? `Personality: ${user.personality_notes}` : ''}
 
 ${persona}
@@ -289,7 +285,7 @@ async function extractAndUpdateProfile(userId) {
   const prompt = `Extract user profile information from this conversation. Return ONLY a valid JSON object with these exact fields (use null if not mentioned):
 {"name": null, "age": null, "gender": null, "profession": null, "family_status": null, "life_context": null, "personality_notes": null, "onboarded": false}
 
-"gender": infer from the name, pronouns used, or any explicit mention. Use "male", "female", or "other". If truly unknown, use null.
+"gender": only if the user explicitly states their gender. Never guess it from their name or writing. Use "male", "female", or "other"; otherwise null.
 "onboarded" should be true only if you have name, profession, and at least one life context detail.
 
 Conversation:

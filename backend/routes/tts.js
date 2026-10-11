@@ -67,8 +67,9 @@ router.post('/speak', async (req, res) => {
     return res.status(503).json({ error: 'ElevenLabs not configured', useFallback: true });
   }
 
-  const { text, persona, userId } = req.body;
-  if (!text?.trim()) return res.status(400).json({ error: 'text is required' });
+  const { text, persona } = req.body;
+  const userId = req.userId; // from the login token, never from the request body
+  if (typeof text !== 'string' || !text.trim()) return res.status(400).json({ error: 'text is required' });
 
   // Look up user gender + language for voice selection
   let userGender   = null;

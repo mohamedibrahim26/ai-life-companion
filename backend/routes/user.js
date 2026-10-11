@@ -1,36 +1,30 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import db from '../db.js';
+import { ownUserParam, publicUser } from '../middleware/auth.js';
 
 const router = Router();
 
-// Get or create user (simple single-user for now, can add auth later)
+router.param('userId', ownUserParam);
+
+// Returns the logged-in user. Anonymous accounts were removed: before, anyone
+// could pass any userId here and get that user's full profile back.
 router.post('/init', (req, res) => {
-  const { userId } = req.body;
-
-  if (userId) {
-    const existing = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-    if (existing) return res.json({ user: existing });
-  }
-
-  const id = uuidv4();
-  db.prepare('INSERT INTO users (id) VALUES (?)').run(id);
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-  res.json({ user });
+  res.json({ user: publicUser(req.user) });
 });
 
 // Get user profile
 router.get('/:userId', (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json({ user });
+  res.json({ user: publicUser(user) });
 });
 
 // Update user profile
 router.patch('/:userId', (req, res) => {
   const { name, age, profession, family_status, life_context, personality_notes, onboarded, gender, language } = req.body;
 
-  const toVal = v => (v == null ? null : String(v));
+  // Cap field length so one request can't store megabytes in a profile.
+  const toVal = v => (v == null ? null : String(v).slice(0, 2000));
 
   db.prepare(`
     UPDATE users SET
@@ -54,7 +48,42 @@ router.patch('/:userId', (req, res) => {
   }
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.userId);
-  res.json({ user });
+  res.json({ user: publicUser(user) });
+});
+
+// Export everything stored about the user (GDPR right of access).
+router.get('/:userId/export', (req, res) => {
+  const id = req.params.userId;
+  const data = {
+    exported_at: new Date().toISOString(),
+    user: publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(id)),
+    messages: db.prepare('SELECT * FROM messages WHERE user_id = ? ORDER BY created_at').all(id),
+    goals: db.prepare('SELECT * FROM goals WHERE user_id = ?').all(id),
+    progress_logs: db.prepare('SELECT * FROM progress_logs WHERE user_id = ?').all(id),
+    moods: db.prepare('SELECT * FROM moods WHERE user_id = ?').all(id),
+    memory_summaries: db.prepare('SELECT * FROM memory_summaries WHERE user_id = ?').all(id),
+    invites: db.prepare('SELECT * FROM invites WHERE user_id = ?').all(id),
+  };
+  res.setHeader('Content-Disposition', 'attachment; filename="vera-data-export.json"');
+  res.json(data);
+});
+
+// Permanently delete the account and all data (GDPR right to erasure).
+router.delete('/:userId', (req, res) => {
+  const id = req.params.userId;
+  db.exec('BEGIN');
+  try {
+    for (const table of ['messages', 'progress_logs', 'goals', 'moods', 'memory_summaries', 'invites']) {
+      db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(id);
+    }
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    console.error('Account deletion failed:', err.message);
+    return res.status(500).json({ error: 'Could not delete account' });
+  }
+  res.json({ deleted: true });
 });
 
 export default router;

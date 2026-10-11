@@ -5,7 +5,7 @@ import AdminPage from './pages/AdminPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import OnboardingPage from './pages/OnboardingPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
-import { authMe, initUser } from './api.js';
+import { authMe } from './api.js';
 
 function Spinner() {
   return (
@@ -99,22 +99,8 @@ export default function App() {
         }
       }
 
-      // Legacy: anonymous userId in localStorage (migration path)
-      const storedId = localStorage.getItem('vera_user_id');
-      if (storedId) {
-        try {
-          const u = await initUser(storedId);
-          if (u.email) {
-            setReady(true);
-            return;
-          }
-          // Anonymous legacy user — let them in without auth
-          setUser(u);
-          setAuthed(true);
-          setReady(true);
-          return;
-        } catch {}
-      }
+      // Anonymous accounts are no longer supported: everyone must log in.
+      localStorage.removeItem('vera_user_id');
 
       setReady(true);
     }
