@@ -24,7 +24,7 @@ chardet==5.2.0          # Encoding detection
 better-profanity==0.7.0
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
-pydantic==2.9.2
+pydantic==2.13.5
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
 numpy==1.26.4
